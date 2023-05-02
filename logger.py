@@ -1,39 +1,31 @@
-from config import LOG, LOG_GROUP_ID, MUSIC_BOT_NAME
+from pyrogram import filters
+
+import config
+from strings import get_command
 from AnonX import app
-from AnonX.utils.database import is_on_off
+from AnonX.misc import SUDOERS
+from AnonX.utils.database import add_off, add_on
+from AnonX.utils.decorators.language import language
+from strings.filters import command
+# Commands
+LOGGER_COMMAND = get_command("LOGGER_COMMAND")
 
-
-async def play_logs(message, streamtype):
-    if await is_on_off(LOG):
-        if message.chat.username:
-            chatusername = f"@{message.chat.username}"
-        else:
-            chatusername = "ᴩʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ"
-        logger_text = f"""
-**━━━━━━━━━━━━━━━**
-****◍ [⌞ 𝘾𝙍 𖢻 ⌯ َِ𝙈َِ𝙐َِ𝙎َِ𝙄َِ𝘾 ⌯ ˹🎧˼⁩ ⌝****
-**━━━━━━━━━━━━━━━**
-**🌹️ اسم المجموعة : >** {message.chat.title} [`{message.chat.id}`]
-**━━━━━━━━━━━━━━━**
-**🥀 اسم المستخدم : ›** {message.from_user.mention}
-**━━━━━━━━━━━━━━━**
-**🌸 يوزر المستخدم : ›** @{message.from_user.username}
-**━━━━━━━━━━━━━━━**
-**🌷 ايدي المستخدم  : ›** `{message.from_user.id}`
-**━━━━━━━━━━━━━━━**
-**🌿 رابط الجروب: >** {chatusername}
-**━━━━━━━━━━━━━━━**
-**🌻 المطلوب:** {message.text}
-**━━━━━━━━━━━━━━━**
-**💐 نوع التشغيل:** {streamtype}
-**━━━━━━━━━━━━━━━**"""
-        if message.chat.id != LOG_GROUP_ID:
-            try:
-                await app.send_message(
-                    LOG_GROUP_ID,
-                    text=logger_text,
-                    disable_web_page_preview=True,
-                )
-            except:
-                pass
-        return
+@app.on_message(
+    command(LOGGER_COMMAND)
+    & SUDOERS
+)
+@language
+async def logger(client, message, _):
+    usage = _["log_1"]
+    if len(message.command) != 2:
+        return await message.reply_text(usage)
+    state = message.text.split(None, 1)[1].strip()
+    state = state.lower()
+    if state == "enable":
+        await add_on(config.LOG)
+        await message.reply_text(_["log_2"])
+    elif state == "disable":
+        await add_off(config.LOG)
+        await message.reply_text(_["log_3"])
+    else:
+        await message.reply_text(usage)
